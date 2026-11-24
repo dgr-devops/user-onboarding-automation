@@ -1,0 +1,19 @@
+# Política local: puede contener rutas propias del servidor.
+config/policy.conf
+
+# Informes con contraseñas temporales y copias de homes: nunca al repositorio.
+onboarding-*.csv
+*.tar.gz
+/reports/
+/archive/
+
+# Variables de entorno y secretos.
+.env
+.env.*
+
+# Editores y sistema.
+.vscode/
+.idea/
+*.swp
+*~
+.DS_Store

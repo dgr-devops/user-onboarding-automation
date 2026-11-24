@@ -1,0 +1,4 @@
+.git
+config/policy.conf
+*.tar.gz
+.env*
