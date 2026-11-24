@@ -199,6 +199,22 @@ docs/       politicas.md, decisiones.md, ejemplo-salida.txt
 Dockerfile, docker-compose.yml, Makefile
 ```
 
+## Verificación
+
+Ejecutado de verdad:
+
+- `make lint` (shellcheck en el contenedor): sin avisos. Local y en GitHub Actions.
+- `make test`: 66 de 66 tests de bats en Debian 12. Local y en GitHub Actions (job en verde en 42 s).
+- `make demo`: recorrido completo alta, auditoría y baja; es la salida que se muestra arriba.
+- Escaneo de secretos, IPs, rutas y correos personales en el árbol y en el historial: sin hallazgos (búsqueda por patrones con `git grep`, no con una herramienta específica).
+
+Sin verificar:
+
+- Solo se ha probado en Debian 12; no en RHEL, Ubuntu ni Alpine.
+- No se ha probado un login real (SSH ni consola) con las cuentas creadas.
+- No hay medición de cobertura ni pruebas de ejecuciones concurrentes.
+- `actionlint` no estaba disponible, así que el workflow solo se ha validado ejecutándolo en GitHub.
+
 ## Limitaciones conocidas
 
 - Solo cuentas locales de Linux; sin Windows, Active Directory, LDAP ni SSO.
