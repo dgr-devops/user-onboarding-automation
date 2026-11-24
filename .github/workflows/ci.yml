@@ -1,0 +1,24 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  lint-and-test:
+    name: shellcheck y bats en Docker (Debian 12)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      # Los mismos comandos que en local: todo ocurre dentro del contenedor.
+      - name: shellcheck
+        run: make lint
+
+      - name: Tests bats
+        run: make test
