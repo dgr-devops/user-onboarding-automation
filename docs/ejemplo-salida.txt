@@ -1,0 +1,151 @@
+=== 1. Simulación (modo por defecto): no cambia nada ===
+
+$ scripts/onboard-users.sh --csv examples/users.csv --config /tmp/policy.conf
+[DRY-RUN] crearía ana.ruiz (Ana Ruiz Molina, Desarrollo) grupos=developers shell=/bin/bash home=/home/ana.ruiz caduca=2027-11-24
+[DRY-RUN] crearía carlos.vega (Carlos Vega Prieto, Sistemas) grupos=sysadmin,support shell=/bin/bash home=/home/carlos.vega caduca=2027-11-24
+[DRY-RUN] crearía lucia.mora (Lucía Mora Gil, Soporte) grupos=support shell=/bin/bash home=/home/lucia.mora caduca=2027-11-24
+[DRY-RUN] crearía pablo.rey (Pablo Rey Castro, Desarrollo) grupos=developers,support shell=/bin/sh home=/home/pablo.rey caduca=2027-11-24
+[DRY-RUN] crearía marta.sanz (Marta Sanz Ortega, Finanzas) grupos=- shell=/usr/sbin/nologin home=/home/marta.sanz caduca=2027-11-24
+Resumen (simulación): a_crear=5 omitidos=0. Usa --apply para ejecutar.
+(código de salida: 0)
+
+
+=== 2. Alta real con --apply ===
+
+$ scripts/onboard-users.sh --csv examples/users.csv --config /tmp/policy.conf --apply
+[HECHO] creado ana.ruiz
+[HECHO] creado carlos.vega
+[HECHO] creado lucia.mora
+[HECHO] creado pablo.rey
+[HECHO] creado marta.sanz
+Resumen: creados=5 omitidos=0 errores=0
+Informe con las contraseñas temporales (solo root): /var/lib/user-onboarding/onboarding-20261124-082714-169.csv
+(código de salida: 0)
+
+
+=== 3. Segunda ejecución: idempotente, no cambia nada ===
+
+$ scripts/onboard-users.sh --csv examples/users.csv --config /tmp/policy.conf --apply
+[SIN CAMBIOS] omitido ana.ruiz: ya existe
+[SIN CAMBIOS] omitido carlos.vega: ya existe
+[SIN CAMBIOS] omitido lucia.mora: ya existe
+[SIN CAMBIOS] omitido pablo.rey: ya existe
+[SIN CAMBIOS] omitido marta.sanz: ya existe
+Resumen: creados=0 omitidos=5 errores=0
+(código de salida: 0)
+
+
+=== 4. Informe de contraseñas (solo root); contraseñas ocultadas aquí ===
+
+$ ls -ld /var/lib/user-onboarding
+drwx------ 1 root root 68 Nov 24 08:27 /var/lib/user-onboarding
+(código de salida: 0)
+
+$ ls -l /var/lib/user-onboarding | tail -n +2 | awk '{print $1, $3, $4, $NF}'
+-rw------- root root onboarding-20261124-082714-169.csv
+(código de salida: 0)
+
+$ sed -E '2,$ s/^([^,]+),[^,]+,/\1,********,/' /var/lib/user-onboarding/*.csv
+username,temporary_password,account_expires,created_at
+ana.ruiz,********,2027-11-24,2026-11-24T08:27:14
+carlos.vega,********,2027-11-24,2026-11-24T08:27:14
+lucia.mora,********,2027-11-24,2026-11-24T08:27:14
+pablo.rey,********,2027-11-24,2026-11-24T08:27:14
+marta.sanz,********,2027-11-24,2026-11-24T08:27:14
+(código de salida: 0)
+
+
+=== 5. Política aplicada a una cuenta ===
+
+$ id ana.ruiz
+uid=1000(ana.ruiz) gid=1001(ana.ruiz) groups=1001(ana.ruiz),1000(developers)
+(código de salida: 0)
+
+$ chage -l ana.ruiz
+Last password change					: password must be changed
+Password expires					: password must be changed
+Password inactive					: password must be changed
+Account expires						: Nov 24, 2027
+Minimum number of days between password change		: 1
+Maximum number of days between password change		: 90
+Number of days of warning before password expires	: 14
+(código de salida: 0)
+
+
+=== 6. Auditoría limpia ===
+
+$ scripts/audit-users.sh --csv examples/users.csv --config /tmp/policy.conf
+INFO     ana.ruiz         cambio de contraseña pendiente (aún no ha entrado)
+OK       ana.ruiz         conforme con el CSV y la política
+INFO     carlos.vega      cambio de contraseña pendiente (aún no ha entrado)
+OK       carlos.vega      conforme con el CSV y la política
+INFO     lucia.mora       cambio de contraseña pendiente (aún no ha entrado)
+OK       lucia.mora       conforme con el CSV y la política
+INFO     pablo.rey        cambio de contraseña pendiente (aún no ha entrado)
+OK       pablo.rey        conforme con el CSV y la política
+INFO     marta.sanz       cambio de contraseña pendiente (aún no ha entrado)
+OK       marta.sanz       conforme con el CSV y la política
+Resumen: usuarios_csv=5 conformes=5 warning=0 critical=0
+(código de salida: 0)
+
+
+=== 7. Desvíos: cuenta ajena al CSV, cuenta bloqueada y grupo cambiado ===
+
+$ scripts/audit-users.sh --csv examples/users.csv --config /tmp/policy.conf
+INFO     ana.ruiz         cambio de contraseña pendiente (aún no ha entrado)
+OK       ana.ruiz         conforme con el CSV y la política
+INFO     carlos.vega      cambio de contraseña pendiente (aún no ha entrado)
+OK       carlos.vega      conforme con el CSV y la política
+WARNING  lucia.mora       cuenta bloqueada
+INFO     lucia.mora       cambio de contraseña pendiente (aún no ha entrado)
+INFO     pablo.rey        cambio de contraseña pendiente (aún no ha entrado)
+WARNING  pablo.rey        grupos 'developers,support,sysadmin' (CSV: 'developers,support')
+INFO     marta.sanz       cambio de contraseña pendiente (aún no ha entrado)
+OK       marta.sanz       conforme con el CSV y la política
+CRITICAL intruso          fuera del CSV y con la cuenta activa
+Resumen: usuarios_csv=5 conformes=3 warning=2 critical=1
+(código de salida: 2)
+
+
+=== 8. Baja: simulación y ejecución (lucia.mora) ===
+
+$ scripts/offboard-users.sh --config /tmp/policy.conf --user lucia.mora
+[SIN CAMBIOS] omitido bloqueo de lucia.mora: ya está bloqueada
+[DRY-RUN] caducidad de lucia.mora (ayer)
+[DRY-RUN] archivaría /home/lucia.mora en /var/backups/offboarding
+Resumen (simulación): procesados=1 errores=0. Usa --apply para ejecutar.
+(código de salida: 0)
+
+$ scripts/offboard-users.sh --config /tmp/policy.conf --user lucia.mora --apply
+[SIN CAMBIOS] omitido bloqueo de lucia.mora: ya está bloqueada
+[HECHO] caducidad de lucia.mora (ayer)
+[HECHO] archivado /home/lucia.mora -> /var/backups/offboarding/lucia.mora-20261124-082715.tar.gz
+Resumen: procesados=1 errores=0
+(código de salida: 0)
+
+$ scripts/offboard-users.sh --config /tmp/policy.conf --user lucia.mora --apply
+[SIN CAMBIOS] omitido bloqueo de lucia.mora: ya está bloqueada
+[SIN CAMBIOS] omitida caducidad de lucia.mora: ya está caducada
+[SIN CAMBIOS] omitido archivo de lucia.mora: ya existe una copia en /var/backups/offboarding
+Resumen: procesados=1 errores=0
+(código de salida: 0)
+
+
+=== 9. Baja con eliminación explícita (pablo.rey) ===
+
+$ scripts/offboard-users.sh --config /tmp/policy.conf --user pablo.rey --apply --delete-home
+[HECHO] bloqueo de pablo.rey
+[HECHO] caducidad de pablo.rey (ayer)
+[HECHO] archivado /home/pablo.rey -> /var/backups/offboarding/pablo.rey-20261124-082715.tar.gz
+[HECHO] eliminada la cuenta pablo.rey y su home
+Resumen: procesados=1 errores=0
+(código de salida: 0)
+
+$ ls -l /var/backups/offboarding | tail -n +2 | awk '{print $1, $3, $4, $NF}'
+-rw------- root root lucia.mora-20261124-082715.tar.gz
+-rw------- root root pablo.rey-20261124-082715.tar.gz
+(código de salida: 0)
+
+$ getent passwd pablo.rey || echo 'pablo.rey ya no existe'
+pablo.rey ya no existe
+(código de salida: 0)
