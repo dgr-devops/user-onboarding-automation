@@ -1,0 +1,39 @@
+# policy.conf — política de cuentas para los scripts de onboarding.
+# Copia este fichero a config/policy.conf (ignorado por git) y ajústalo.
+# Formato CLAVE=valor, sin espacios alrededor del "=". No se ejecuta como shell:
+# no hay variables ni sustituciones. Las claves que no pongas toman estos valores.
+
+# --- Validación de entradas ---
+# Expresión regular (ERE) que debe cumplir cada nombre de usuario.
+USERNAME_REGEX=^[a-z][a-z0-9._-]{2,31}$
+# Grupos que el CSV puede asignar (separados por espacios). Se crean si no existen.
+ALLOWED_GROUPS=developers sysadmin support
+# Shells aceptadas y la que se usa si el campo shell del CSV va vacío.
+ALLOWED_SHELLS=/bin/bash /bin/sh /usr/sbin/nologin
+DEFAULT_SHELL=/bin/bash
+
+# --- Seguridad de cuentas ---
+# UID mínimo de las cuentas gestionadas. Por debajo se consideran de sistema y no se tocan.
+MIN_UID=1000
+# Los homes viven aquí; nunca se archiva ni se borra nada fuera de este directorio.
+HOME_BASE=/home
+HOME_MODE=0750
+
+# --- Contraseña temporal y envejecimiento ---
+PASSWORD_LENGTH=20
+# Días máximos entre cambios de contraseña (0 = sin límite).
+PASS_MAX_DAYS=90
+# Días mínimos entre cambios.
+PASS_MIN_DAYS=1
+# Días de aviso antes de que caduque la contraseña.
+PASS_WARN_DAYS=14
+# Días de gracia tras caducar la contraseña antes de bloquear la cuenta (0 = sin bloqueo).
+INACTIVE_DAYS=30
+# La cuenta caduca a los N días de crearse (0 = no caduca).
+ACCOUNT_EXPIRY_DAYS=365
+
+# --- Rutas ---
+# Informes con contraseñas temporales (directorio 0700, ficheros 0600, solo root).
+REPORT_DIR=/var/lib/user-onboarding
+# Copias tar.gz de los homes al dar de baja.
+ARCHIVE_DIR=/var/backups/offboarding

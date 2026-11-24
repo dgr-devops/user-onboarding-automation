@@ -1,0 +1,7 @@
+# Datos ficticios para pruebas y documentación. Grupos separados por ";".
+username,full_name,department,groups,shell
+ana.ruiz,Ana Ruiz Molina,Desarrollo,developers,/bin/bash
+carlos.vega,Carlos Vega Prieto,Sistemas,sysadmin;support,/bin/bash
+lucia.mora,Lucía Mora Gil,Soporte,support,/bin/bash
+pablo.rey,Pablo Rey Castro,Desarrollo,developers;support,/bin/sh
+marta.sanz,Marta Sanz Ortega,Finanzas,,/usr/sbin/nologin
