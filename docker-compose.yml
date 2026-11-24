@@ -1,0 +1,28 @@
+# Servicios de prueba. Todo se ejecuta como root DENTRO del contenedor, sin red,
+# con el repositorio montado en solo lectura.
+services:
+  test:
+    build: .
+    image: user-onboarding-automation:test
+    network_mode: none
+    volumes:
+      - .:/opt/uoa:ro
+    command: ["bats", "--print-output-on-failure", "tests"]
+
+  lint:
+    image: user-onboarding-automation:test
+    network_mode: none
+    volumes:
+      - .:/opt/uoa:ro
+    command:
+      - bash
+      - -c
+      - shellcheck -x lib/*.sh scripts/*.sh tests/*.bash examples/*.sh
+
+  # Contenedor interactivo y demo reproducible (make shell / make demo).
+  shell:
+    image: user-onboarding-automation:test
+    network_mode: none
+    volumes:
+      - .:/opt/uoa:ro
+    command: ["bash"]
